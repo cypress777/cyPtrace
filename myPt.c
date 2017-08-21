@@ -31,24 +31,26 @@ int main(int argc, char *argv[]) {
   }
 
   if(pid > 1) {
-repeat:
+
     wait(&sta);
     if(WIFEXITED(sta)) return 0;
-    if(!WIFSTOPPED(sta)) goto repeat;
     
-    unsigned long addr_ = ;
-    unsigned long data_ = ptrace(PTRACE_PEEKTEXT, pid, (void*)addr_, 0);
+    long addr_ = ;
+    long data_ = ptrace(PTRACE_PEEKTEXT, pid, (void*)addr_, 0);
     ptrace(PTRACE_POKETEXT, pid, (void*)addr_, (void*)((data_ & ~0xff) | 0xcc));
 
-    while(1) {
-      ptrace(PTRACE_CONT, pid, 0, 0);
+    ptrace(PTRACE_CONT, pid, 0, 0);
 
+    while(1) {
       if(wait(&sta) < 0) exit(3);
-      
+      if(WIFEXITED(sta)) return 0;      
+
       gettimeofday(&tic, NULL);
 
       long rip = ptrace(PTRACE_PEEKUSER, pid, 8*RIP, 0);
-  
+      long tmp_rip;
+      long data_singlestep;  
+
       if(rip <0) {
         printf("get negative rip.\n");
         exit(3);
@@ -59,14 +61,22 @@ repeat:
       printf("stopped at %lx.\n", rip);
    
       if(rip == addr_) {
-        printf("time is %ld(usec).\n", tic.tv_sec);
+        printf("time is %ld(usec) at.\n", tic.tv_sec);
         ptrace(PTRACE_POKETEXT, pid, (void*)rip, (void*)data_);
+        tmp_rip = rip;
+
+        ptrace(PTRACE_POKEUSER, pid, 8 * RIP, (void*)rip);
+        ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
+        wait(&sta);
+        rip = ptrace(PTRACE_PEEKUSER, pid, 8 * RIP, 0);   
+        ptrace(PTRACE_POKETEXT, pid, (void*)(tmp_rip), (void*)((data_ & ~0xff) | 0xcc));
       } else {
         printf("wrong rip %lx.\n", rip);
         exit(3);
       }
       
       ptrace(PTRACE_POKEUSER, pid, 8 * RIP, (void*)rip);
+      ptrace(PTRACE_CONT, pid, 0, 0);
     }
   }
 }
