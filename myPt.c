@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
       printf("stopped at %lx.\n", rip);
    
       if(rip == addr_) {
-        printf("time is %ld(usec) at.\n", tic.tv_sec);
+        printf("time is %ld(usec).\n", tic.tv_sec);
         ptrace(PTRACE_POKETEXT, pid, (void*)rip, (void*)data_);
         tmp_rip = rip;
 
