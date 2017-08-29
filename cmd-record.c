@@ -19,7 +19,7 @@ int cmd_record(int argc, char **argv) {
   char execname = argv[1];
   int execfd;
   int status;
-  struct timeval tic;
+  struct timeval tic, beg_tic, end_tic, delay;
   struct symtab *symtab = malloc(sizeof(struct symtab));
   memset(symtab, 0, sizeof(struct symtab));
   struct bp *bptab_in = malloc(sizeof(struct bp));
@@ -62,10 +62,10 @@ int cmd_record(int argc, char **argv) {
     if(ppid == -1) 
       break;
     if(WIFEXITED(status)) {
-      gettimeoftheaday(&tic, NULL);
+      gettimeofday(&tic, NULL);
       tid_times[count_tid] = {
         .tid = ppid; 
-        .time = tic.tv_sec; 
+        .time = tic; 
         .type = TIE_END;
       }
     count_tid++;
@@ -83,10 +83,10 @@ int cmd_record(int argc, char **argv) {
     }
     if(WSTOPSIG(status) == SIGTRAP) {
       if (((status >> 16) & 0xffff) == PTRACE_EVENT_CLONE){
-        gettimeoftheaday(&tic, NULL);
+        gettimeofday(&tic, NULL);
         tid_times[count_tid] = {
           .tid = ppid; 
-          .time = tic.tv_sec; 
+          .time = tic; 
           .type = TID_BEGIN;
         }
       count_tid++;
@@ -94,7 +94,7 @@ int cmd_record(int argc, char **argv) {
       }
     }
 
-    gettimeoftheday(&tic, NULL);
+    gettimeofday(&beg_tic, NULL);
 
     long tmp_rip = ptrace(PTRACE_PEEKUSER, ppid, 8 * RIP, NULL);
     long addr = tmp_rip--;   
@@ -103,6 +103,10 @@ int cmd_record(int argc, char **argv) {
       tmp_bp = pop_stack(ppid, ppid_stacks[]); 
     };
     if(bpio & FUNC_IN){
+      if(flag) {
+        flag = 0;
+        delay = beg_tic;
+      }
       get_ret_bp(addr, &ret_bp);
       set_bp(ret_bp.addr);
       bptab_idx = find_bp_idx(addr, bptab_in);
@@ -115,6 +119,10 @@ int cmd_record(int argc, char **argv) {
     set_bp(tmp_bp.addr);
     tmp_rip = ptrace(PTRACE_PEEKUSER, ppid, 8 * RIP, NULL);
     ptrace(PTRACE_POKEUSER, pid, 8 * RIP, (void*)tmp_rip);
+    
+    gettimeofday(&end_tic, NULL);   
+    delay = tic_add(delay, tic_sub(end_tic, beg_tic)); 
+
     ptrace(PTRACE_CONT, pid, 0, 0); 
   }
 
