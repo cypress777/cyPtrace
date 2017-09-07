@@ -1,4 +1,4 @@
-#include<stdio>
+#include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
 #include<stdbool.h>
@@ -9,7 +9,7 @@
 #define SYMTAB_GROW 16
 
 enum symtype {
-  ST_UNKNOW,
+  ST_UNKNOWN,
   ST_LOCAL = 't',
   ST_GLOBAL = 'T',
   ST_WEAK = 'w',
@@ -31,6 +31,7 @@ struct symtab {
 };
 
 int main(int argc, char *argv[]) {
+//int load_dynsym(char *filename, unsigned long offset) {
   int fd;
   unsigned char elf_ident[EI_NIDENT];
   uint16_t e_type;
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
   fd = open(filename, O_RDONLY);
 //checking file type etc.
   if (fd < 0) {
-    printf("eoor at open %s.\n");
+    printf("error at open %s.\n", filename);
     exit(1);
   }
 
@@ -67,8 +68,8 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
  
-  if (e_type != ET_EXEC) {
-    printf("not exec.\n");
+  if (e_type != ET_EXEC && e_type != ET_DYN) {
+    printf("not exec or dyn.\n");
     exit(1);
   }
 //file check done
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) {
   elf_version(EV_CURRENT);
 
   elf = elf_begin(fd, ELF_C_READ, NULL);
-  size_t i, nr_pher;
+  size_t i, nr_phdr;
   int err_flag = -1;
 
   if (elf == NULL) {
@@ -131,10 +132,10 @@ int main(int argc, char *argv[]) {
 
     shstr = elf_strptr(elf, shstr_idx, shdr.sh_name);
 
-    if (!strcmp(shstr, ".symtab")) {
+    if (!strcmp(shstr, ".dynsym")) {
       sym_sec = sec;
       if (sym_sec == NULL) {
-        printf("error at strptr.\n")j;
+        printf("error at strptr.\n");
         exit(1);
       }
       nr_sym = shdr.sh_size / shdr.sh_entsize;
@@ -145,7 +146,7 @@ int main(int argc, char *argv[]) {
  
   sym_data = elf_getdata(sym_sec, NULL);
   if (sym_data == NULL) {
-    printf(" error at getdata.\n";
+    printf(" error at getdata.\n");
     exit(1);
   }
   
@@ -196,7 +197,7 @@ int main(int argc, char *argv[]) {
     
     sym->name = strdup(name);
 
-    printf("[%zd] %c %lx + %-5u %d\n", symtab->nr_sym, sym->type, sym->addr, sym->size, sym->name);
+    printf("[%zd] %c %lx + %-5u %s\n", symtab->nr_sym, sym->type, sym->addr, sym->size, sym->name);
   }
 
   if (symtab->nr_sym == 0) printf("no symbol.\n");

@@ -51,7 +51,7 @@ int cmd_record(int argc, char **argv) {
 
   int nr_bp_in = load_bptab_in(symtab, bptab_in);
   for(i = 0; i < nr_bp_in; i++) {
-    set_bp(bptab_in[i].addr);
+    enable_bp(bptab_in[i].addr);
   }
  
   ptrace(PTRACE_CONT, pid, NULL, NULL);
@@ -93,30 +93,39 @@ int cmd_record(int argc, char **argv) {
       continue;
       }
     }
-
+    
+    data_fd = open("record.data", O_RDWR|O_CREAT, 00777);
+ 
     gettimeofday(&beg_tic, NULL);
 
     long tmp_rip = ptrace(PTRACE_PEEKUSER, ppid, 8 * RIP, NULL);
     long addr = tmp_rip--;   
-    int bpio = checkbp_out(ppid, addr, ppid_stacks[]);
-    if(bpio & FUNC_OUT) {
+    int bpio = check_in_out(ppid, addr, ppid_stacks[]);
+    if(bpio == FUNC_OUT) {
       tmp_bp = pop_stack(ppid, ppid_stacks[]); 
     };
-    if(bpio & FUNC_IN){
+    if(bpio == FUNC_IN){
       if(flag) {
         flag = 0;
         delay = beg_tic;
       }
       get_ret_bp(addr, &ret_bp);
-      set_bp(ret_bp.addr);
+      enable_bp(ret_bp.addr);
       bptab_idx = find_bp_idx(addr, bptab_in);
       push_stack(ppid, ppid_stacks[], bptab_idx, ret_bp);
       tmp_bp = bptab_in[bptab_idx];
     }
-    recover_bp(tmp_bp);
+    timestamp = sub(beg_tic, delay);
+    
+    write_to_file(data_fd, &bpio, sizeof(bpio));
+    write_to_file(data_fd, &tmp_bp, sizeof(tmp_bp)); 
+    write_to_file(data_fd, &timestamp, sizeof(timestamp));
+
+//step over breakpoint
+    disable_bp(tmp_bp);
     singlestep(tmp_rip);
     wait(&status);
-    set_bp(tmp_bp.addr);
+    enable_bp(tmp_bp.addr);
     tmp_rip = ptrace(PTRACE_PEEKUSER, ppid, 8 * RIP, NULL);
     ptrace(PTRACE_POKEUSER, pid, 8 * RIP, (void*)tmp_rip);
     
@@ -125,6 +134,6 @@ int cmd_record(int argc, char **argv) {
 
     ptrace(PTRACE_CONT, pid, 0, 0); 
   }
-
+close(data_fd);
 return 0;  
 }

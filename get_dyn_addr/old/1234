@@ -1,0 +1,13 @@
+00400000-00401000 r-xp 00000000 fd:01 1048587                            /home/cypress/tests/hello
+00600000-00601000 r--p 00000000 fd:01 1048587                            /home/cypress/tests/hello
+00601000-00602000 rw-p 00001000 fd:01 1048587                            /home/cypress/tests/hello
+7f064d03a000-7f064d1fa000 r-xp 00000000 fd:01 1185266                    /lib/x86_64-linux-gnu/libc-2.23.so
+7f064d1fa000-7f064d3fa000 ---p 001c0000 fd:01 1185266                    /lib/x86_64-linux-gnu/libc-2.23.so
+7f064d3fa000-7f064d3fe000 r--p 001c0000 fd:01 1185266                    /lib/x86_64-linux-gnu/libc-2.23.so
+7f064d3fe000-7f064d400000 rw-p 001c4000 fd:01 1185266                    /lib/x86_64-linux-gnu/libc-2.23.so
+7f064d404000-7f064d42a000 r-xp 00000000 fd:01 1185244                    /lib/x86_64-linux-gnu/ld-2.23.so
+7f064d629000-7f064d62a000 r--p 00025000 fd:01 1185244                    /lib/x86_64-linux-gnu/ld-2.23.so
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+00400000-00402000 r-xp 00000000 fd:01 1048587  whatsoever
+00400000-00401000 r-xp 00000000 fd:01 1048587  whatsoever
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0

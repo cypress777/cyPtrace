@@ -10,19 +10,18 @@ int load_bptab_in(struct symtab *symtab, struct bp *bptab_in);
 
 int find_bp_idx(long addr, struct bp *bptab_in);
 
-void set_bp(long addr);
+void enable_bp(long addr);
 
 void get_ret_bp(long addr, struct bp bp);
 
 struct bp find_bp(long addr, struct bp *bptab)
 
-void checkbp_out(int ppid, long addr, struct ppid_stack *ppid_stacks[]);
+void check_in_out(int ppid, long addr, struct ppid_stack *ppid_stacks[]);
  
-void checkbp_in(int ppid, long addr, struct bp *bptab_in);
+void pop_bp_stack(int ppid, struct ppid_stack *ppid_stacks[]);
 
-void pop_stack(int ppid, struct ppid_stack *ppid_stacks[]);
+void push_bp_stack(int ppid, struct ppid_stack *ppid_stacks[], long addr, struct bp ret_bp);
 
-void push_stack(int ppid, struct ppid_stack *ppid_stacks[], long addr, struct bp ret_bp);
+void disable_bp(struct bp bp);
 
-void revover_bp(struct bp bp);
 
